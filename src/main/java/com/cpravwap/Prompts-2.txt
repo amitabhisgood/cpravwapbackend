@@ -1,0 +1,226 @@
+This is the error.
+~
+This application has no explicit mapping for /error, so you are seeing this as a fallback.
+
+Tue Oct 01 00:10:57 IST 2024
+There was an unexpected error (type=Internal Server Error, status=500).
+Type definition error: [simple type, class com.cpravwap.controller.OHLCData]
+org.springframework.http.converter.HttpMessageConversionException: Type definition error: [simple type, class com.cpravwap.controller.OHLCData]
+	at org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.writeInternal(AbstractJackson2HttpMessageConverter.java:489)
+	at org.springframework.http.converter.AbstractGenericHttpMessageConverter.write(AbstractGenericHttpMessageConverter.java:114)
+	at org.springframework.web.servlet.mvc.method.annotation.AbstractMessageConverterMethodProcessor.writeWithMessageConverters(AbstractMessageConverterMethodProcessor.java:297)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor.handleReturnValue(RequestResponseBodyMethodProcessor.java:190)
+	at org.springframework.web.method.support.HandlerMethodReturnValueHandlerComposite.handleReturnValue(HandlerMethodReturnValueHandlerComposite.java:78)
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:136)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:917)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:829)
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014)
+	at org.springframework.web.servlet.FrameworkServlet.doGet(FrameworkServlet.java:903)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:564)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:205)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:482)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:115)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:340)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:391)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:896)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1744)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1191)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: com.fasterxml.jackson.databind.exc.InvalidDefinitionException: No serializer found for class com.cpravwap.controller.OHLCData and no properties discovered to create BeanSerializer (to avoid exception, disable SerializationFeature.FAIL_ON_EMPTY_BEANS) (through reference chain: java.util.ArrayList[0])
+	at com.fasterxml.jackson.databind.exc.InvalidDefinitionException.from(InvalidDefinitionException.java:77)
+	at com.fasterxml.jackson.databind.SerializerProvider.reportBadDefinition(SerializerProvider.java:1308)
+	at com.fasterxml.jackson.databind.DatabindContext.reportBadDefinition(DatabindContext.java:414)
+	at com.fasterxml.jackson.databind.ser.impl.UnknownSerializer.failForEmpty(UnknownSerializer.java:53)
+	at com.fasterxml.jackson.databind.ser.impl.UnknownSerializer.serialize(UnknownSerializer.java:30)
+	at com.fasterxml.jackson.databind.ser.std.CollectionSerializer.serializeContents(CollectionSerializer.java:145)
+	at com.fasterxml.jackson.databind.ser.std.CollectionSerializer.serialize(CollectionSerializer.java:107)
+	at com.fasterxml.jackson.databind.ser.std.CollectionSerializer.serialize(CollectionSerializer.java:25)
+	at com.fasterxml.jackson.databind.ser.DefaultSerializerProvider._serialize(DefaultSerializerProvider.java:479)
+	at com.fasterxml.jackson.databind.ser.DefaultSerializerProvider.serializeValue(DefaultSerializerProvider.java:399)
+	at com.fasterxml.jackson.databind.ObjectWriter$Prefetch.serialize(ObjectWriter.java:1568)
+	at com.fasterxml.jackson.databind.ObjectWriter.writeValue(ObjectWriter.java:1061)
+	at org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.writeInternal(AbstractJackson2HttpMessageConverter.java:483)
+	... 48 more
+~
+This is the controller code.
+~
+
+@RestController
+public class OHLCDataretriever {
+
+    @GetMapping("/api/ohlc-data")
+    public List<OHLCData> ohlcData() {
+        List<OHLCData> ohlcDataList = new ArrayList<>();
+        
+        // Add sample data
+        ohlcDataList.add(new OHLCData("timestamp", 123, 150, 120, 130, 128, 129, 132, 125, 130));
+        
+        return ohlcDataList;
+    }
+}
+
+// New Model Class
+class OHLCData {
+    private String time;
+    private double open;
+    private double high;
+    private double low;
+    private double close;
+    private double cpr;
+    private double pivot;
+    private double pivotHigh;
+    private double pivotLow;
+    private double anchorVWAP;
+
+    public OHLCData(String time, double open, double high, double low, double close, double cpr, double pivot, double pivotHigh, double pivotLow, double anchorVWAP) {
+        this.time = time;
+        this.open = open;
+        this.high = high;
+        this.low = low;
+        this.close = close;
+        this.cpr = cpr;
+        this.pivot = pivot;
+        this.pivotHigh = pivotHigh;
+        this.pivotLow = pivotLow;
+        this.anchorVWAP = anchorVWAP;
+    }
+
+    // Getters and Setters (if needed)
+}
+~
+What to do?
+~~~~~
+~~~~~
+This is the code that parse CSV file and update table. A method has to be added that converts the CSV and returns JSON object. 
+JSON format is 
+~
+[{ time: 'timestamp', open: 123, high: 150, low: 120, close: 130, cpr: 128, pivot: 129, pivotHigh: 132, pivotLow: 125, anchorVWAP: 130 }]
+~
+Code:
+~
+import com.cpravwap.entity.D270924java;
+import com.cpravwap.repository.D270924javaRepository;
+import com.opencsv.CSVReader;
+import com.opencsv.exceptions.CsvValidationException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.io.FileReader;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
+
+@Service
+public class CsvService {
+    
+    @Autowired
+    private D270924javaRepository repository;
+
+    // Path to the CSV file
+    private static final String CSV_FILE_PATH = "E:\\backups2024\\Java\\cpravwapbe\\NIFTY 3rd OCT 26500 CE (20240927).csv";
+    
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("EEE MMM dd yyyy HH:mm:ss");    
+    public void parseAndSaveCsv() {
+        System.out.println("Parsing CSV..1");
+        try (CSVReader reader = new CSVReader(new FileReader(CSV_FILE_PATH))) {
+            String[] nextLine;
+            boolean isHeader = true;
+            String dateString = "";
+            while ((nextLine = reader.readNext()) != null) {
+                // Skip header row
+                if (isHeader) {
+                    isHeader = false;
+                    continue;
+                }
+
+                // If nextLine contains only 1 element and includes ';', split it into array
+                if (nextLine.length == 1 && (nextLine[0].contains(",") || nextLine[0].contains(";"))) {
+                    nextLine = nextLine[0].split(";");
+                }
+
+                if (nextLine.length != 15) {  // Assuming 15 columns are expected
+                    System.err.println("Invalid row length: " + String.join(",", nextLine));
+                    continue;
+                }
+
+                D270924java record = new D270924java();
+
+                try {
+                dateString = nextLine[0].replaceAll("GMT.*", "").trim(); // Remove timezone
+                dateString = dateString.replace("(India Standard Time)", "").trim();
+                DateTimeFormatter dtfInput = DateTimeFormatter.ofPattern("E MMM dd yyyy HH:mm:ss", Locale.ENGLISH);
+                LocalDateTime localDateTime = LocalDateTime.parse(dateString, dtfInput);
+                record.setDate(localDateTime); // Set the date
+
+                    // Parse other fields
+                    record.setOpen(parseDouble(nextLine[1]));
+                    record.setHigh(parseDouble(nextLine[2]));
+                    record.setLow(parseDouble(nextLine[3]));
+                    record.setClose(parseDouble(nextLine[4]));
+                    record.setPivot(parseDouble(nextLine[5]));
+                    record.setResistance1(parseDouble(nextLine[6]));
+                    record.setSupport1(parseDouble(nextLine[7]));
+                    record.setResistance2(parseDouble(nextLine[8]));
+                    record.setSupport2(parseDouble(nextLine[9]));
+                    record.setResistance3(parseDouble(nextLine[10]));
+                    record.setSupport3(parseDouble(nextLine[11]));
+                    record.setCprPivot(parseDouble(nextLine[12]));
+                    record.setCprBc(parseDouble(nextLine[13]));
+                    record.setCprTc(parseDouble(nextLine[14]));
+                    System.out.println(record);
+
+                    // Save the record to the database
+                    repository.save(record);
+                } catch (Exception e) {
+                    System.err.println("Error parsing row: " + dateString);
+                    e.printStackTrace();
+                    break;
+                }
+            }
+
+        } catch (IOException | CsvValidationException e) {
+            System.err.println("Error reading the CSV file.");
+            e.printStackTrace();
+        }
+    }
+    private Double parseDouble(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null; // or 0.0 depending on your requirements
+        }
+        return Double.parseDouble(value.trim());
+    }
+}
+
+~
+
+

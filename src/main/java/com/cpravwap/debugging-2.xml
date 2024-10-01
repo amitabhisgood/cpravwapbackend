@@ -1,0 +1,687 @@
+I'm sorry to hear you're encountering issues with your Spring Boot application. The error message:
+
+```
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Web application could not be started as there was no org.springframework.boot.web.servlet.server.ServletWebServerFactory bean defined in the context.
+
+Action:
+
+Check your application's dependencies for a supported servlet web server.
+Check the configured web application type.
+```
+
+indicates that Spring Boot is attempting to start your application as a **web application** but cannot find the necessary 
+**Servlet Web Server** (like Tomcat, Jetty, or Undertow) to serve it. This typically happens due to misconfigurations in 
+dependencies or the application setup.
+
+Let's systematically troubleshoot and resolve this issue.
+
+---
+
+## **1. Understand the Cause**
+
+### **1.1. Why This Error Occurs**
+
+- **Missing Web Server Dependencies:** Spring Boot requires embedded web server dependencies (like Tomcat) to run a web 
+application. If these are missing, the application fails to start.
+- **Incorrect Application Type Configuration:** Spring Boot applications can be configured as either web or non-web (console) 
+applications. If configured incorrectly, it may expect a web server even when it's not needed.
+
+---
+
+## **2. Review Your `pom.xml`**
+
+Your `pom.xml` includes `spring-boot-starter-web`, which should automatically bring in the embedded Tomcat server. 
+However, there are a few points to verify:
+
+### **2.1. Ensure No Exclusions Are Present**
+
+Check if any dependencies are excluding the embedded Tomcat server. In your provided `pom.xml`, there are no exclusions 
+shown for `spring-boot-starter-web`, so this is likely not the issue.
+
+### **2.2. Verify Dependency Versions**
+
+You have an inconsistency in the MySQL Connector/J versions:
+
+- **Properties:**
+  ```xml
+  <mysql.connector.version>8.0.34</mysql.connector.version>
+  ```
+- **Dependency:**
+  ```xml
+  <dependency>
+      <groupId>com.mysql</groupId>
+      <artifactId>mysql-connector-j</artifactId>
+      <version>8.0.33</version>
+  </dependency>
+  ```
+
+**Recommendation:** Use the same version for the MySQL Connector/J across your project.
+
+**Updated Dependency:**
+```xml
+<dependency>
+    <groupId>com.mysql</groupId>
+    <artifactId>mysql-connector-j</artifactId>
+    <version>${mysql.connector.version}</version>
+</dependency>
+```
+
+### **2.3. Specify Maven Compiler Plugin Version**
+
+Your `maven-compiler-plugin` lacks a specified version. It's good practice to define it explicitly to avoid using an incompatible or outdated version.
+
+**Add Version:**
+```xml
+<plugin>
+    <artifactId>maven-compiler-plugin</artifactId>
+    <version>3.11.0</version> <!-- Use a recent stable version -->
+    <configuration>
+        <source>21</source>
+        <target>21</target>
+    </configuration>
+</plugin>
+```
+
+### **2.4. Remove Redundant or Conflicting Configurations**
+
+You have the following in your `pom.xml`:
+
+```xml
+<start-class>com.cpravwap.Cpravwapbe</start-class>
+<exec.mainClass>com.cpravwap.Cpravwapbe</exec.mainClass>
+```
+
+**Action:** These are not typically required unless you have a specific need. Consider removing them to prevent potential conflicts.
+
+---
+
+## **3. Verify the Main Application Class**
+
+The main application class is crucial for bootstrapping your Spring Boot application. Ensure it's correctly annotated and located in the base package.
+
+### **3.1. Correct Annotation and Structure**
+
+**Example Main Class (`Cpravwapbe.java`):**
+
+```java
+package com.cpravwap;
+
+import com.cpravwap.service.CsvService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.boot.CommandLineRunner;
+
+@SpringBootApplication
+public class Cpravwapbe {
+
+    @Autowired
+    private CsvService csvService;
+
+    public static void main(String[] args) {
+        SpringApplication.run(Cpravwapbe.class, args);
+    }
+
+    @Bean
+    public CommandLineRunner run() {
+        return args -> {
+            csvService.parseAndSaveCsv();
+        };
+    }
+}
+```
+
+**Key Points:**
+
+- **`@SpringBootApplication`:** This annotation combines `@Configuration`, `@EnableAutoConfiguration`, and `@ComponentScan`. It should be placed on the main class.
+- **Package Placement:** The main class should reside in the base package (`com.cpravwap`) to ensure Spring Boot scans all sub-packages (`entity`, `repository`, `service`, etc.).
+- **CommandLineRunner:** The `CommandLineRunner` bean ensures that your CSV parsing logic runs upon application startup.
+
+### **3.2. Common Mistakes to Avoid**
+
+- **Missing `@SpringBootApplication`:** Without this annotation, Spring Boot won't auto-configure your application.
+- **Incorrect Package Structure:** If your main class is not in the base package, Spring Boot might not scan other packages, leading to missing beans.
+- **Multiple Main Classes:** Ensure there's only one main class annotated with `@SpringBootApplication` to avoid conflicts.
+
+---
+
+## **4. Check `application.properties` Configuration**
+
+Ensure that your `application.properties` does not inadvertently configure the application type to non-web if it's 
+intended to be a web application.
+
+### **4.1. Avoid Setting Web Application Type to None**
+
+**Check for:**
+```properties
+spring.main.web-application-type=none
+```
+
+**Action:**
+
+- **If Present:** Remove or comment out this line unless you intend to run a non-web application.
+
+### **4.2. Correct Database Configuration**
+
+Ensure your database configurations are correct.
+
+**Example `application.properties`:**
+```properties
+# Server Configuration
+server.port=8080
+
+# Database Configuration
+spring.datasource.url=jdbc:mysql://localhost:3306/cprst?useSSL=false&serverTimezone=UTC
+spring.datasource.username=your_db_username
+spring.datasource.password=your_db_password
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# JPA Configuration
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+
+# Logging Configuration
+logging.level.org.springframework=INFO
+logging.level.com.cpravwap=DEBUG
+```
+
+**Notes:**
+
+- **Replace `your_db_username` and `your_db_password`** with your actual MySQL credentials.
+- **`spring.jpa.hibernate.ddl-auto=update`:** This setting allows Hibernate to create or update tables based on your entities. For production environments, consider using `validate` or managing schema changes manually.
+- **Logging Levels:** Adjust logging levels as needed to get more detailed logs for troubleshooting.
+
+---
+
+## **5. Clean and Rebuild the Project**
+
+Sometimes, residual build artifacts can cause unexpected issues. Perform a clean build to ensure everything compiles correctly.
+
+**Commands:**
+```bash
+mvn clean install
+mvn spring-boot:run
+```
+
+**Alternatively, using your IDE:**
+
+- **IntelliJ IDEA:** `Build > Rebuild Project`
+- **Eclipse:** `Project > Clean`
+
+---
+
+## **6. Verify Package Structure**
+
+Ensure your project follows a standard Maven directory structure with proper package placements.
+
+**Recommended Structure:**
+```
+cpravwapbe
+├── src
+│   ├── main
+│   │   ├── java
+│   │   │   └── com
+│   │   │       └── cpravwap
+│   │   │           ├── Cpravwapbe.java
+│   │   │           ├── entity
+│   │   │           │   └── D270924java.java
+│   │   │           ├── repository
+│   │   │           │   └── D270924javaRepository.java
+│   │   │           └── service
+│   │   │               └── CsvService.java
+│   │   └── resources
+│   │       └── application.properties
+│   └── test
+│       └── java
+│           └── com
+│               └── cpravwap
+│                   └── CpravwapbeApplicationTests.java
+├── pom.xml
+└── ... (other files)
+```
+
+**Key Points:**
+
+- **Base Package:** `com.cpravwap`
+- **Sub-Packages:** `entity`, `repository`, `service`, etc., should be nested within the base package.
+
+---
+
+## **7. Enhanced Logging for Troubleshooting**
+
+Implementing detailed logging can provide insights into where the application is failing.
+
+### **7.1. Use SLF4J with Logback**
+
+Ensure you're using a proper logging framework instead of `System.out.println`. Spring Boot uses SLF4J with Logback by default.
+
+**Example in `CsvService.java`:**
+
+```java
+package com.cpravwap.service;
+
+import com.cpravwap.entity.D270924java;
+import com.cpravwap.repository.D270924javaRepository;
+import com.opencsv.CSVReader;
+import com.opencsv.exceptions.CsvValidationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.io.FileReader;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
+@Service
+public class CsvService {
+
+    private static final Logger logger = LoggerFactory.getLogger(CsvService.class);
+
+    @Autowired
+    private D270924javaRepository repository;
+
+    // Path to the CSV file
+    private static final String CSV_FILE_PATH = "E:\\backups2024\\Java\\cpravwapbe\\NIFTY 3rd OCT 26500 CE (20240927).csv";
+
+    // Date formatter based on the expected date format in CSV
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd"); // Adjust pattern as needed
+
+    public void parseAndSaveCsv() {
+        logger.info("Starting CSV import process from file: {}", CSV_FILE_PATH);
+
+        try (CSVReader reader = new CSVReader(new FileReader(CSV_FILE_PATH))) {
+            String[] nextLine;
+            boolean isHeader = true;
+            int recordCount = 0;
+            int successCount = 0;
+            int failureCount = 0;
+
+            while ((nextLine = reader.readNext()) != null) {
+                // Skip header row
+                if (isHeader) {
+                    isHeader = false;
+                    logger.debug("Skipping header row");
+                    continue;
+                }
+
+                // Ensure the row has the expected number of columns
+                if (nextLine.length < 15) {
+                    logger.warn("Invalid row length (expected 15, got {}): {}", nextLine.length, String.join(",", nextLine));
+                    failureCount++;
+                    continue;
+                }
+
+                D270924java record = new D270924java();
+
+                try {
+                    // Parse and set each field
+                    record.setDate(LocalDate.parse(nextLine[0], DATE_FORMATTER));
+                    record.setOpen(parseDouble(nextLine[1]));
+                    record.setHigh(parseDouble(nextLine[2]));
+                    record.setLow(parseDouble(nextLine[3]));
+                    record.setClose(parseDouble(nextLine[4]));
+                    record.setPivot(parseDouble(nextLine[5]));
+                    record.setResistance1(parseDouble(nextLine[6]));
+                    record.setSupport1(parseDouble(nextLine[7]));
+                    record.setResistance2(parseDouble(nextLine[8]));
+                    record.setSupport2(parseDouble(nextLine[9]));
+                    record.setResistance3(parseDouble(nextLine[10]));
+                    record.setSupport3(parseDouble(nextLine[11]));
+                    record.setCprPivot(parseDouble(nextLine[12]));
+                    record.setCprBc(parseDouble(nextLine[13]));
+                    record.setCprTc(parseDouble(nextLine[14]));
+
+                    // Save the record to the database
+                    repository.save(record);
+                    successCount++;
+                    recordCount++;
+
+                    logger.debug("Successfully inserted record #{}: {}", recordCount, record);
+                } catch (Exception e) {
+                    logger.error("Error parsing or saving row: {}", String.join(",", nextLine), e);
+                    failureCount++;
+                }
+            }
+
+            logger.info("CSV import completed. Total Records: {}, Successfully Inserted: {}, Failed: {}",
+                    recordCount + failureCount, successCount, failureCount);
+
+        } catch (IOException | CsvValidationException e) {
+            logger.error("Error reading the CSV file at path: {}", CSV_FILE_PATH, e);
+        }
+    }
+
+    private Double parseDouble(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null; // or 0.0 depending on your requirements
+        }
+        try {
+            return Double.parseDouble(value.trim());
+        } catch (NumberFormatException e) {
+            logger.warn("Unable to parse Double from value: {}", value);
+            return null;
+        }
+    }
+}
+```
+
+**Benefits:**
+
+- **Info Logs:** Indicate the start and completion of the CSV import process.
+- **Debug Logs:** Provide details about each record being processed.
+- **Warn Logs:** Highlight issues like invalid row lengths or parsing problems.
+- **Error Logs:** Capture exceptions during file reading or data processing.
+
+### **7.2. Update `application.properties` for Logging**
+
+Ensure that `application.properties` is set to capture the necessary log levels.
+
+```properties
+# Logging Configuration
+logging.level.org.springframework=INFO
+logging.level.com.cpravwap=DEBUG
+```
+
+**Explanation:**
+
+- **`logging.level.org.springframework=INFO`:** General Spring framework logs at INFO level.
+- **`logging.level.com.cpravwap=DEBUG`:** Your application logs at DEBUG level for detailed insights.
+
+---
+
+## **8. Ensure Correct Package Scanning**
+
+Spring Boot scans for components (`@Service`, `@Repository`, `@Controller`, etc.) within the base package and its sub-packages. If your classes are outside these packages, Spring Boot won't detect them, leading to missing beans.
+
+**Example Structure:**
+
+```
+com.cpravwap
+├── Cpravwapbe.java
+├── entity
+│   └── D270924java.java
+├── repository
+│   └── D270924javaRepository.java
+├── service
+│   └── CsvService.java
+└── controller
+    └── CsvController.java (if any)
+```
+
+**Action:**
+
+- Ensure all components are under `com.cpravwap` or its sub-packages.
+
+---
+
+## **9. Clean and Rebuild the Project**
+
+Sometimes, lingering build artifacts can cause issues. Perform a clean build to ensure all dependencies are correctly fetched and compiled.
+
+**Commands:**
+```bash
+mvn clean install
+mvn spring-boot:run
+```
+
+**Or, using your IDE:**
+
+- **IntelliJ IDEA:** `Build > Rebuild Project`
+- **Eclipse:** `Project > Clean`
+
+---
+
+## **10. Verify Database Connectivity and Permissions**
+
+Ensure that:
+
+1. **MySQL Server is Running:** The MySQL server should be active and listening on the specified port (default is `3306`).
+2. **Database Exists:** The `cprst` database should be created in MySQL.
+   ```sql
+   CREATE DATABASE IF NOT EXISTS cprst;
+   ```
+3. **User Has Permissions:** The user specified in `application.properties` should have the necessary privileges to create tables and insert data.
+   ```sql
+   GRANT ALL PRIVILEGES ON cprst.* TO 'your_db_username'@'localhost';
+   FLUSH PRIVILEGES;
+   ```
+4. **Correct JDBC URL:** Ensure that the JDBC URL is correctly formatted and points to the right database.
+   ```properties
+   spring.datasource.url=jdbc:mysql://localhost:3306/cprst?useSSL=false&serverTimezone=UTC
+   ```
+
+---
+
+## **11. Check for Other Potential Issues**
+
+### **11.1. Ensure No Conflicting Dependencies**
+
+Run the following command to inspect the dependency tree and check for any conflicts or missing dependencies:
+
+```bash
+mvn dependency:tree
+```
+
+Look for `spring-boot-starter-tomcat` under `spring-boot-starter-web`. If it's missing, it could be causing the issue.
+
+### **11.2. Inspect the Final JAR**
+
+After building the project, inspect the generated JAR to ensure that it includes all necessary dependencies, especially the embedded Tomcat server.
+
+**Using Maven Shade Plugin (Optional):**
+
+If you suspect issues with dependency packaging, consider using the Maven Shade Plugin to create an uber-jar.
+
+**Add to `pom.xml`:**
+```xml
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-shade-plugin</artifactId>
+    <version>3.4.1</version>
+    <executions>
+        <execution>
+            <phase>package</phase>
+            <goals>
+                <goal>shade</goal>
+            </goals>
+            <configuration>
+                <createDependencyReducedPom>false</createDependencyReducedPom>
+                <transformers>
+                    <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                        <mainClass>com.cpravwap.Cpravwapbe</mainClass>
+                    </transformer>
+                </transformers>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+```
+
+**Build the Shade JAR:**
+```bash
+mvn clean package
+```
+
+**Run the Shade JAR:**
+```bash
+java -jar target/cpravwapbe-1.0-SNAPSHOT-shaded.jar
+```
+
+### **11.3. Validate Java Version Compatibility**
+
+Ensure that your development environment and Maven are using Java 21, as specified in your `pom.xml`.
+
+**Check Java Version:**
+```bash
+java -version
+```
+
+**Ensure Maven Uses Correct Java Version:**
+```bash
+mvn -v
+```
+
+If Maven is not using Java 21, configure Maven to use the correct JDK.
+
+---
+
+## **12. Optional: Convert to a Non-Web Application**
+
+If your application does not require web functionalities (i.e., you don't need to expose REST APIs or serve web pages), you can configure it as a **non-web (console) application**. This removes the need for a web server, potentially simplifying your setup.
+
+### **12.1. Remove `spring-boot-starter-web` Dependency**
+
+Edit your `pom.xml` to remove the `spring-boot-starter-web` dependency.
+
+**Remove:**
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+```
+
+### **12.2. Set Web Application Type to `NONE`**
+
+In your `application.properties`, add:
+
+```properties
+spring.main.web-application-type=none
+```
+
+**Explanation:**
+
+- This tells Spring Boot to run as a non-web application, eliminating the need for servlet-related beans.
+
+### **12.3. Adjust Main Application Class (If Necessary)**
+
+If you were using `CommandLineRunner` or a similar mechanism, ensure it's correctly set up to process the CSV upon startup.
+
+**Example Main Class:**
+```java
+package com.cpravwap;
+
+import com.cpravwap.service.CsvService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.boot.CommandLineRunner;
+
+@SpringBootApplication
+public class Cpravwapbe {
+
+    @Autowired
+    private CsvService csvService;
+
+    public static void main(String[] args) {
+        SpringApplication.run(Cpravwapbe.class, args);
+    }
+
+    @Bean
+    public CommandLineRunner run() {
+        return args -> {
+            csvService.parseAndSaveCsv();
+        };
+    }
+}
+```
+
+### **12.4. Rebuild and Run the Application**
+
+After making the above changes:
+
+```bash
+mvn clean install
+mvn spring-boot:run
+```
+
+**Behavior:**
+
+- The application should start, execute the CSV parsing and database insertion, and then terminate (if not running any other processes).
+
+---
+
+## **13. Final Checklist**
+
+1. **Main Application Class:**
+   - Annotated with `@SpringBootApplication`.
+   - Located in the base package (`com.cpravwap`).
+   - Includes a `CommandLineRunner` or similar to execute CSV processing on startup.
+
+2. **`pom.xml` Dependencies:**
+   - Includes `spring-boot-starter-web` for web applications.
+   - Consistent versions for dependencies (e.g., MySQL Connector/J).
+   - Specifies version for `maven-compiler-plugin`.
+   - No exclusions that remove embedded Tomcat.
+
+3. **`application.properties`:**
+   - Correct database configurations.
+   - Does **not** set `spring.main.web-application-type=none` for web applications.
+   - Proper logging levels set for troubleshooting.
+
+4. **Project Structure:**
+   - Follows standard Maven directory layout.
+   - All components (entities, repositories, services) are in sub-packages of the base package.
+
+5. **Build and Run:**
+   - Clean and rebuild the project.
+   - Run the application and monitor logs for successful startup and CSV processing.
+
+6. **Database Verification:**
+   - Ensure the `cprst` database exists.
+   - Verify that the `D270924java` table is created and populated.
+
+---
+
+## **14. Next Steps**
+
+1. **Implement the Recommendations Above:**
+
+   - **Main Class:** Ensure correct annotations and structure.
+   - **Dependencies:** Adjust `pom.xml` as needed.
+   - **Configurations:** Verify `application.properties`.
+   - **Rebuild:** Clean and rebuild the project.
+
+2. **Run the Application:**
+
+   ```bash
+   mvn clean install
+   mvn spring-boot:run
+   ```
+
+3. **Monitor Logs:**
+
+   - Look for startup logs indicating successful initialization.
+   - Observe logs from `CsvService` showing CSV processing steps.
+
+4. **Check MySQL Database:**
+
+   - Verify that the `D270924java` table is created.
+   - Confirm that data from the CSV file is inserted.
+
+5. **If Issues Persist:**
+
+   - **Share Logs:** Provide specific log excerpts that show errors or unusual behavior.
+   - **Provide Main Class Code:** If possible, share your `Cpravwapbe.java` main class code for further inspection.
+   - **Check Environment:** Ensure that your development environment (Java version, IDE settings) aligns with project configurations.
+
+---
+
+By meticulously following the steps outlined above, you should be able to identify and resolve the issue preventing your Spring Boot application from starting correctly. If after implementing these steps you still face challenges, please provide additional details such as:
+
+- **Main Application Class Code (`Cpravwapbe.java`):** To verify annotations and structure.
+- **Detailed Logs:** Especially any stack traces or error messages beyond the initial failure.
+- **Directory Structure:** Confirming that your packages are correctly organized.
+
+With this information, I can offer more targeted assistance to help you get your application up and running successfully.

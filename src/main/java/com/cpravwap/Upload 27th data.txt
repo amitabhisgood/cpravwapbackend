@@ -1,0 +1,627 @@
+ALTER TABLE cprst.d270924java MODIFY COLUMN date DATETIME;  
+SET time_zone = '+05:30';
+
+Certainly! Below is a comprehensive guide to help you create a Spring Boot application that reads data from a CSV file and updates the MySQL database accordingly. This guide includes:
+
+1. **Project Setup**: Ensure your `pom.xml` includes necessary dependencies.
+2. **Entity Definition**: Define the `D270924java` entity.
+3. **Repository Interface**: Create a repository to interact with the database.
+4. **Service to Parse CSV and Update Database**: Implement the logic to read the CSV and persist data.
+5. **Application Runner**: Execute the CSV parsing and data insertion on application startup.
+6. **Configuration**: Set up `application.properties` for database connectivity.
+7. **Directory Structure**: Organize your project files appropriately.
+
+Let's walk through each step in detail.
+
+---
+
+## 1. Project Setup
+
+### **1.1. `pom.xml` Configuration**
+
+Ensure your `pom.xml` includes the necessary dependencies for Spring Boot, Spring Data JPA, MySQL Connector, 
+and a CSV parsing library (we'll use [OpenCSV](http://opencsv.sourceforge.net/)).
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <!-- Project Coordinates -->
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.example</groupId>
+    <artifactId>cprstjava</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
+    <name>CPRSTJava Application</name>
+    <description>Spring Boot application to update CPRST database from CSV</description>
+
+    <!-- Parent Spring Boot Starter -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.1.3</version> <!-- Use the latest stable version -->
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
+    <!-- Properties -->
+    <properties>
+        <java.version>17</java.version>
+        <spring.boot.version>3.1.3</spring.boot.version>
+        <mysql.connector.version>8.0.33</mysql.connector.version>
+        <opencsv.version>5.7.1</opencsv.version> <!-- Latest OpenCSV version -->
+    </properties>
+
+    <!-- Dependencies -->
+    <dependencies>
+        <!-- Spring Boot Starter Web -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Spring Boot Starter Data JPA -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- MySQL Connector/J -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>${mysql.connector.version}</version>
+        </dependency>
+
+        <!-- OpenCSV for CSV Parsing -->
+        <dependency>
+            <groupId>com.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>${opencsv.version}</version>
+        </dependency>
+
+        <!-- Lombok (Optional) -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Spring Boot DevTools (Optional) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Spring Boot Starter Test (Optional) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <!-- Build Plugins -->
+    <build>
+        <plugins>
+            <!-- Spring Boot Maven Plugin -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring.boot.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Maven Compiler Plugin -->
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
+```
+
+**Explanation:**
+
+- **OpenCSV Dependency**: Added to parse CSV files easily.
+- **Lombok**: Optional, reduces boilerplate code like getters/setters. Ensure your IDE supports Lombok.
+- **DevTools & Test Dependencies**: Optional but useful for development and testing.
+
+---
+
+## 2. Entity Definition
+
+### **2.1. Create the `D270924java` Entity**
+
+Create an entity class that maps to the `D270924java` table in the `cprst` MySQL database.
+
+```java
+package com.example.cprstjava.entity;
+
+import jakarta.persistence.*;
+import lombok.Data;
+
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "D270924java")
+@Data
+public class D270924java {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id; // Primary Key
+
+    @Column(name = "date")
+    private LocalDate date;
+
+    @Column(name = "open")
+    private Double open;
+
+    @Column(name = "high")
+    private Double high;
+
+    @Column(name = "low")
+    private Double low;
+
+    @Column(name = "close")
+    private Double close;
+
+    @Column(name = "pivot")
+    private Double pivot;
+
+    @Column(name = "resistance1")
+    private Double resistance1;
+
+    @Column(name = "support1")
+    private Double support1;
+
+    @Column(name = "resistance2")
+    private Double resistance2;
+
+    @Column(name = "support2")
+    private Double support2;
+
+    @Column(name = "resistance3")
+    private Double resistance3;
+
+    @Column(name = "support3")
+    private Double support3;
+
+    @Column(name = "cpr_pivot")
+    private Double cprPivot;
+
+    @Column(name = "cpr_bc")
+    private Double cprBc;
+
+    @Column(name = "cpr_tc")
+    private Double cprTc;
+
+    // Constructors, Getters, Setters (Generated by Lombok's @Data)
+}
+```
+
+**Explanation:**
+
+- **@Entity**: Marks the class as a JPA entity.
+- **@Table**: Specifies the table name in the database.
+- **@Id & @GeneratedValue**: Defines the primary key with auto-increment.
+- **@Column**: Maps class fields to table columns. Ensure column names match exactly or adjust as needed.
+- **Lombok's @Data**: Generates getters, setters, `toString()`, `equals()`, and `hashCode()` methods automatically.
+
+---
+
+## 3. Repository Interface
+
+### **3.1. Create `D270924javaRepository`**
+
+This repository interface provides CRUD operations for the `D270924java` entity.
+
+```java
+package com.example.cprstjava.repository;
+
+import com.example.cprstjava.entity.D270924java;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface D270924javaRepository extends JpaRepository<D270924java, Long> {
+    // Additional query methods can be defined here if needed
+}
+```
+
+**Explanation:**
+
+- **JpaRepository**: Provides built-in methods like `save()`, `findAll()`, `findById()`, etc.
+- **@Repository**: Indicates that the interface is a Spring Data repository.
+
+---
+
+## 4. Service to Parse CSV and Update Database
+
+### **4.1. Create `CsvService`**
+
+This service will handle reading the CSV file and persisting data to the database.
+
+```java
+package com.example.cprstjava.service;
+
+import com.example.cprstjava.entity.D270924java;
+import com.example.cprstjava.repository.D270924javaRepository;
+import com.opencsv.CSVReader;
+import com.opencsv.exceptions.CsvValidationException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.io.FileReader;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
+@Service
+public class CsvService {
+
+    @Autowired
+    private D270924javaRepository repository;
+
+    // Path to the CSV file
+    private static final String CSV_FILE_PATH = "E:\\backups2024\\Java\\cpravwapbe\\NIFTY 3rd OCT 26500 CE (20240927).csv";
+
+    // Date formatter based on the expected date format in CSV
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd"); // Adjust pattern as needed
+
+    public void parseAndSaveCsv() {
+        try (CSVReader reader = new CSVReader(new FileReader(CSV_FILE_PATH))) {
+            String[] nextLine;
+            boolean isHeader = true;
+
+            while ((nextLine = reader.readNext()) != null) {
+                // Skip header row
+                if (isHeader) {
+                    isHeader = false;
+                    continue;
+                }
+
+                // Ensure the row has the expected number of columns
+                if (nextLine.length < 15) {
+                    System.err.println("Invalid row length: " + String.join(",", nextLine));
+                    continue;
+                }
+
+                D270924java record = new D270924java();
+                
+                try {
+                    // Parse and set each field
+                    // Assuming Date is in 'yyyyMMdd' format, adjust if different
+                    record.setDate(LocalDate.parse(nextLine[0], DATE_FORMATTER));
+                    record.setOpen(parseDouble(nextLine[1]));
+                    record.setHigh(parseDouble(nextLine[2]));
+                    record.setLow(parseDouble(nextLine[3]));
+                    record.setClose(parseDouble(nextLine[4]));
+                    record.setPivot(parseDouble(nextLine[5]));
+                    record.setResistance1(parseDouble(nextLine[6]));
+                    record.setSupport1(parseDouble(nextLine[7]));
+                    record.setResistance2(parseDouble(nextLine[8]));
+                    record.setSupport2(parseDouble(nextLine[9]));
+                    record.setResistance3(parseDouble(nextLine[10]));
+                    record.setSupport3(parseDouble(nextLine[11]));
+                    record.setCprPivot(parseDouble(nextLine[12]));
+                    record.setCprBc(parseDouble(nextLine[13]));
+                    record.setCprTc(parseDouble(nextLine[14]));
+
+                    // Save the record to the database
+                    repository.save(record);
+                } catch (Exception e) {
+                    System.err.println("Error parsing row: " + String.join(",", nextLine));
+                    e.printStackTrace();
+                }
+            }
+
+            System.out.println("CSV data has been successfully imported into the database.");
+
+        } catch (IOException | CsvValidationException e) {
+            System.err.println("Error reading the CSV file.");
+            e.printStackTrace();
+        }
+    }
+
+    private Double parseDouble(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null; // or 0.0 depending on your requirements
+        }
+        return Double.parseDouble(value.trim());
+    }
+}
+```
+
+**Explanation:**
+
+- **CSVReader**: Utilizes OpenCSV to read the CSV file.
+- **parseAndSaveCsv()**: Reads each line, skips the header, parses the data, and saves it to the database.
+- **Error Handling**: Logs invalid rows and parsing errors without stopping the entire process.
+- **Date Parsing**: Adjust the `DATE_FORMATTER` pattern based on your CSV's date format. For example, if dates are in `dd-MM-yyyy`, change the pattern accordingly.
+
+**Note:** Ensure that the CSV file's date format matches the `DateTimeFormatter`. Adjust the pattern if necessary.
+
+---
+
+## 5. Application Runner
+
+### **5.1. Execute the Service on Application Startup**
+
+Use `CommandLineRunner` to execute the CSV parsing and data insertion when the application starts.
+
+```java
+package com.example.cprstjava;
+
+import com.example.cprstjava.service.CsvService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+import org.springframework.boot.CommandLineRunner;
+
+@SpringBootApplication
+public class CprstjavaApplication implements CommandLineRunner {
+
+    @Autowired
+    private CsvService csvService;
+
+    public static void main(String[] args) {
+        SpringApplication.run(CprstjavaApplication.class, args);
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+        csvService.parseAndSaveCsv();
+    }
+}
+```
+
+**Explanation:**
+
+- **CommandLineRunner**: Interface used to run code after the Spring Boot application has started.
+- **run() Method**: Invokes the `parseAndSaveCsv()` method from `CsvService` to process the CSV file.
+
+**Optional:** If you prefer to control when the CSV is processed (e.g., via a REST endpoint), you can omit the `CommandLineRunner` and create a controller instead.
+
+---
+
+## 6. Configuration
+
+### **6.1. Set Up `application.properties`**
+
+Configure the database connection in `src/main/resources/application.properties`.
+
+```properties
+# Server Configuration
+server.port=8080
+
+# Database Configuration
+spring.datasource.url=jdbc:mysql://localhost:3306/cprst?useSSL=false&serverTimezone=UTC
+spring.datasource.username=your_db_username
+spring.datasource.password=your_db_password
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# JPA Configuration
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+
+# Logging Configuration (Optional)
+logging.level.org.springframework=INFO
+logging.level.com.example.cprstjava=DEBUG
+```
+
+**Explanation:**
+
+- **spring.datasource.url**: JDBC URL to connect to the `cprst` database on `localhost`.
+- **spring.datasource.username & spring.datasource.password**: Replace with your actual MySQL credentials.
+- **spring.jpa.hibernate.ddl-auto=update**: Automatically creates or updates the table based on the entity. For production, consider using `validate` or managing schema changes manually.
+- **spring.jpa.show-sql=true**: Logs the SQL statements executed by Hibernate. Useful for debugging.
+- **hibernate.dialect**: Specifies the SQL dialect for MySQL 8.
+
+**Security Tip:** Avoid hardcoding credentials in `application.properties` for production. Use environment variables or externalized configuration instead.
+
+---
+
+## 7. Directory Structure
+
+Ensure your project follows a standard Maven directory structure. Here's a recommended layout:
+
+```
+cprstjava
+├── src
+│   ├── main
+│   │   ├── java
+│   │   │   └── com
+│   │   │       └── example
+│   │   │           └── cprstjava
+│   │   │               ├── CprstjavaApplication.java
+│   │   │               ├── entity
+│   │   │               │   └── D270924java.java
+│   │   │               ├── repository
+│   │   │               │   └── D270924javaRepository.java
+│   │   │               └── service
+│   │   │                   └── CsvService.java
+│   │   └── resources
+│   │       ├── application.properties
+│   │       └── ... (other resources)
+│   └── test
+│       └── java
+│           └── com
+│               └── example
+│                   └── cprstjava
+│                       └── CprstjavaApplicationTests.java
+├── pom.xml
+└── ... (other files)
+```
+
+---
+
+## 8. Running the Application
+
+### **8.1. Build the Project**
+
+Navigate to your project directory and build the project using Maven:
+
+```bash
+mvn clean install
+```
+
+### **8.2. Run the Application**
+
+Run the Spring Boot application using Maven:
+
+```bash
+mvn spring-boot:run
+```
+
+**Alternatively**, you can run the generated JAR file:
+
+```bash
+java -jar target/cprstjava-0.0.1-SNAPSHOT.jar
+```
+
+**Upon running**, the application will execute the `CsvService`, parse the CSV file, and insert records into the `D270924java` table in the `cprst` database.
+
+---
+
+## 9. Additional Considerations
+
+### **9.1. Handling Large CSV Files**
+
+If your CSV file is large, consider optimizing the data insertion process:
+
+- **Batch Inserts**: Modify the `CsvService` to save entities in batches to reduce the number of database calls.
+  
+  ```java
+  // Inside CsvService
+  @Autowired
+  private EntityManager entityManager;
+
+  @Transactional
+  public void parseAndSaveCsvBatch() {
+      try (CSVReader reader = new CSVReader(new FileReader(CSV_FILE_PATH))) {
+          String[] nextLine;
+          boolean isHeader = true;
+          int batchSize = 50;
+          int count = 0;
+
+          while ((nextLine = reader.readNext()) != null) {
+              if (isHeader) {
+                  isHeader = false;
+                  continue;
+              }
+
+              if (nextLine.length < 15) {
+                  System.err.println("Invalid row length: " + String.join(",", nextLine));
+                  continue;
+              }
+
+              D270924java record = new D270924java();
+              // ... set fields as before
+
+              repository.save(record);
+              count++;
+
+              if (count % batchSize == 0) {
+                  entityManager.flush();
+                  entityManager.clear();
+              }
+          }
+
+          repository.flush();
+          System.out.println("CSV data has been successfully imported into the database.");
+
+      } catch (IOException | CsvValidationException e) {
+          System.err.println("Error reading the CSV file.");
+          e.printStackTrace();
+      }
+  }
+  ```
+
+- **Asynchronous Processing**: Process the CSV in a separate thread to prevent blocking the main thread.
+
+### **9.2. Validations and Error Handling**
+
+- **Data Validation**: Before saving, validate the data to ensure consistency and correctness.
+- **Logging**: Use a logging framework (like SLF4J with Logback) instead of `System.out.println` for better logging practices.
+
+### **9.3. Running Multiple Times**
+
+- **Idempotency**: Decide how to handle running the CSV import multiple times. For example, you might want to avoid duplicate entries by checking if a record for a specific date already exists.
+
+### **9.4. Automating CSV Updates**
+
+- **Scheduling**: If you need to update the database regularly with new CSV files, consider using Spring's scheduling capabilities (`@Scheduled` annotation).
+
+### **9.5. Security**
+
+- **Secure Credentials**: As mentioned earlier, avoid hardcoding database credentials. Use environment variables or a secure secrets manager.
+- **File Access**: Ensure the application has read permissions for the CSV file location.
+
+---
+
+## 10. Complete Code Summary
+
+For your convenience, here's a summary of all the code components.
+
+### **10.1. `pom.xml`**
+
+As provided in [Section 1](#1-project-setup).
+
+### **10.2. Entity Class: `D270924java.java`**
+
+As provided in [Section 2](#21-create-the-d270924java-entity).
+
+### **10.3. Repository Interface: `D270924javaRepository.java`**
+
+As provided in [Section 3](#31-repository-interface).
+
+### **10.4. Service Class: `CsvService.java`**
+
+As provided in [Section 4](#41-create-csvservice).
+
+### **10.5. Application Class: `CprstjavaApplication.java`**
+
+As provided in [Section 5](#51-execute-the-service-on-application-startup).
+
+### **10.6. Configuration: `application.properties`**
+
+As provided in [Section 6](#61-set-up-applicationproperties).
+
+---
+
+## Conclusion
+
+By following the steps outlined above, you will have a Spring Boot application that:
+
+- Connects to your MySQL `cprst` database.
+- Creates the `D270924java` table if it doesn't exist (handled by JPA's `ddl-auto=update`).
+- Reads data from the specified CSV file.
+- Parses and inserts the data into the database.
+
+**Next Steps:**
+
+1. **Testing**: Ensure that the data is correctly inserted by querying the `D270924java` table.
+2. **Enhancements**: Implement features like REST APIs to access the data, error reporting, and user interfaces as needed.
+3. **Deployment**: Deploy the application to your desired environment (local, cloud, etc.).
+
+If you encounter any issues or need further assistance, feel free to ask!
